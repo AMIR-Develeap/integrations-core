@@ -23,7 +23,7 @@ class Faults:
     Collect faults from the APIC
     """
 
-    def __init__(self, check, api, instance, namespace, send_log):
+    def __init__(self, check, api, instance, namespace, send_log):  # JMW is this the proper way to get access to send_log here?
         self.check = check
         self.api = api
         self.instance = instance
@@ -31,6 +31,7 @@ class Faults:
         self.namespace = namespace
         self.send_log = send_log  # JMW is this the proper way to do this?
 
+        # JMWCONFIG add send_faults
         # Config for submitting device/interface metadata to NDM
         self.send_ndm_metadata = self.instance.get('send_ndm_metadata', False)
 
@@ -50,7 +51,7 @@ class Faults:
     def collect(self):
         self.log.info("JMWfaults.collect()")
         # JMW use this flag for faults too?
-        if self.ndm_enabled():
+        if self.ndm_enabled():  # JMW change
             faults = self.api.get_faults()
             # JMW? collect_timestamp = int(time.time())
             self.submit_faults(faults)
@@ -91,8 +92,9 @@ class Faults:
 #   }
 # }
     def submit_faults(self, faults):
+        self.log.info("JMWfaults submit_faults() processing %d faults", len(faults))
         for fault in faults:
-            self.log.info("JMW faults submit_faults() fault: %s", fault)
+            self.log.info("JMWfaults submit_faults() fault: %s", fault)
             # if isinstance(fault, dict):
             #     self.log.info("JMW fault is a dictionary")
             # else:
@@ -116,26 +118,69 @@ class Faults:
             # payload['ddsource'] = "cisco-aci-faults"  # JMW?
 
             # get created timestamp
-# last_transition = fault.get("faultInst", {}).get("attributes", {}).get("lastTransition")
+            # last_transition = fault.get("faultInst", {}).get("attributes", {}).get("lastTransition")
 
+            # JMW instead, do payload = fault["faultInst"]["attributes"] w/ try/except to log error if they dont exist as expected?
             faultinst = fault.get("faultInst", {})  # JMW dict
-            # if isinstance(faultinst, dict):
-            #     self.log.info("JMW faultinst is a dictionary")
-            # else:
-            #     self.log.info("JMW faultinst is NOT a dictionary")
-            # if isinstance(faultinst, str):
-            #     self.log.info("JMW faultinst is a str")
-            # else:
-            #     self.log.info("JMW faultinst is NOT a str")
-            # self.log.info("JMW faultinst: %s", faultinst)
-
             attributes = faultinst.get("attributes", {})  # JMW dict
 
-            payload['cause'] = attributes.get("cause")
-            payload['code'] = attributes.get("code")
-            payload['message'] = attributes.get("descr")
-            payload['severity'] = attributes.get("severity")
-            last_transition = attributes.get("lastTransition")  # JMW str
+            # attributes is a dict
+            # for each entry in the dict, add it to the payload
+            # JMW map severity to status?
+            # JMW should any other mappings be handled specially?
+            # JMW are there any standard fields we should map/add?  descr-->message?  tags from config file?  ddsource, or is it already handled?  what else?
+            #  standard attributes: host, timestamp, service, status (https://datadoghq.atlassian.net/wiki/spaces/LB/pages/2316567621/How+to+validate+a+logs+integration#Checklist)
+            # JMWORIGWORKS for key, value in attributes.items():
+                # JMW if value == "" then continue, or add it anyways?
+                # JMW??? snmp traps don't have a message, just the JSON
+                # JMWJMW if I do  this then it seems like we can only search on the message field
+                # if key == "descr":  # JMW right?  should I also add it as descr?
+                #    payload['message'] = value
+                # JMWORIGWORKS payload[key] = value
+                # JMWORIGWORKS if key == "lastTransition":
+                    # JMWORIGWORKS payload['timestamp'] = get_timestamp(datetime.datetime.fromisoformat(attributes.get("lastTransition")))
+
+            # JMWTRY
+            # payload["message"] = attributes
+
+            # JMWNEXTTRY
+            payload = attributes
+
+            # JMW move status to upgradeStatus
+            # from https://pubhub.devnetcloud.com/media/apic-mim-ref-301/docs/MO-faultInst.html#overview
+            # The upgrade status. This property is for internal use only.
+            payload["upgradeStatus"] = payload.get("status", "")
+
+            # JMW set status based on severity because status is a standard attribute
+            #payload["status"] = payload.get("severity", "unknown")
+
+            # JMW not 1-1 mapping for all?  explicitly map some values?
+            # JMW critical, major, minor, warning, info, cleared
+            # set payload "status" based on "severity"
+            match payload.get("severity"):
+                case "critical":
+                    payload["status"] = "critical"
+                case "major":
+                    payload["status"] = "error"
+                case "minor":
+                    payload["status"] = "warning"
+                case "warning":
+                    payload["status"] = "warning"
+                case "info":
+                    payload["status"] = "info"
+                case "cleared":
+                    payload["status"] = "info"
+                case _:
+                    payload["status"] = "unknown"
+
+            # JMW have code handle if lastTransition is missing just in case?
+            payload["timestamp"] = get_timestamp(datetime.datetime.fromisoformat(attributes.get("lastTransition")))
+
+            # payload['cause'] = attributes.get("cause")
+            # payload['code'] = attributes.get("code")
+            # payload['message'] = attributes.get("descr")
+            # payload['severity'] = attributes.get("severity")
+            # last_transition = attributes.get("lastTransition")  # JMW str
             # self.log.info("JMW last_transition: %s", last_transition)
 
             # self.log.info("JMW submit_faults() trying to get timstamp from created ", fault.get("faultInst", {}).get("attributes", {}).get("created"))
@@ -144,17 +189,12 @@ class Faults:
 
             # from base.py<check> comment: - timestamp: should be an integer or float representing the number of seconds since the Unix epoch
             # get current time in seconds
-            payload['timestamp'] = get_timestamp()
-            # JMW payload['timestamp'] = get_timestamp(datetime.datetime.fromisoformat(last_transition))
+            # JMWWORKSpayload['timestamp'] = get_timestamp()
+            # JMW
+            # payload['timestamp'] = get_timestamp(datetime.datetime.fromisoformat(last_transition))
 
-            payload['status'] = fault.get("severity")
+            # payload['status'] = fault.get("severity")
             # JMW other fields
 
-            self.log.info("JMW faults submit_faults() payload: %s", payload)
-
-            # JMWNEXT       Error: 'Faults' object has no attribute 'send_log'
+            self.log.info("JMWfaults submit_faults() payload: %s", payload)
             self.send_log(payload)
-
-            # exit out of for loop so we only send the first fault
-            self.log.info("JMW HACK faults submit_faults() breaking out of loop")  # JMW debug
-            break

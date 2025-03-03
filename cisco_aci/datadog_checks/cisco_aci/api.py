@@ -303,6 +303,7 @@ class Api:
     # JMWMOVE
     def get_faults(self):
         path = '/api/node/class/faultInst.json'
+        # JMWTRY path = '/api/node/class/faultDelegate.json'  # all faults received had "message": "{}"
         response = self.make_request(path)
         return self._parse_response(response)
 

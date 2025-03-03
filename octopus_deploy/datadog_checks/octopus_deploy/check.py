@@ -501,13 +501,14 @@ class OctopusDeployCheck(AgentCheck, ConfigMixin):
             children = log.get("Children", [])
 
             for log_element in log_elements:
+                # JMWFORMATTING
                 payload = {}
                 payload['ddtags'] = ",".join(tags)  # JMW same for faults?
                 payload['message'] = log_element.get("MessageText")
                 payload['timestamp'] = get_timestamp(datetime.datetime.fromisoformat(log_element.get("OccurredAt")))  # JMWTIMESTAMP
                 payload['status'] = log_element.get("Category")
                 payload['stage_name'] = name
-                self.send_log(payload)  # JMWTUE try something like this
+                self.send_log(payload)  # JMWSENDLOG
 
             self._submit_activity_logs(children, tags)
 

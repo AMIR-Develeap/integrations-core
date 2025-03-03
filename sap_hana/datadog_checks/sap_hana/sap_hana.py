@@ -201,6 +201,7 @@ class SapHanaCheck(AgentCheck):
         for audit_log in self.iter_rows(queries.AuditLog(previous_timestamp=previous_timestamp)):
             data = exclude_undefined_keys(audit_log)
 
+            # JMWFORMATTING
             data['status'] = data.pop('event_level')
             data['timestamp'] = get_timestamp(data['timestamp'])
 
@@ -211,7 +212,7 @@ class SapHanaCheck(AgentCheck):
 
             # https://help.sap.com/docs/SAP_HANA_PLATFORM/4fe29514fd584807ac9f2a04f6754767/3f81ccc7e35d44cbbc595c7d552c202a.html
             new_timestamp = datetime.strftime(audit_log['timestamp'], '%Y-%m-%d %H:%M:%S.%f')
-            self.send_log(data, cursor={'timestamp': new_timestamp})  # JMWTUE
+            self.send_log(data, cursor={'timestamp': new_timestamp})  # JMWSENDLOG
 
     def query_backup_status(self):
         # https://help.sap.com/viewer/4fe29514fd584807ac9f2a04f6754767/2.0.02/en-US/783108ba8b8b4c709959220b4535a010.html

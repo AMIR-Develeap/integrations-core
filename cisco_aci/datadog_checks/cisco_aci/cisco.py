@@ -148,7 +148,7 @@ class CiscoACICheck(AgentCheck):
 
         # JMW new faults.collect()?
         try:
-            faults = Faults(self, api, self.instance, self.instance.get('namespace', 'default'), self.send_log)  # JMWFRI
+            faults = Faults(self, api, self.instance, self.instance.get('namespace', 'default'), self.send_log)  # JMWSENDLOG
             faults.collect()
         except Exception as e:
             self.log.error('faults collection failed: %s', e)
