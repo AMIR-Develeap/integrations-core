@@ -15,7 +15,6 @@ VENDOR_CISCO = 'cisco'
 PAYLOAD_METADATA_BATCH_SIZE = 100
 DEVICE_USER_TAGS_PREFIX = "dd.internal.resource:ndm_device_user_tags"
 INTERFACE_USER_TAGS_PREFIX = "dd.internal.resource:ndm_interface_user_tags"
-# JMWUP
 
 
 class Faults:
@@ -23,13 +22,13 @@ class Faults:
     Collect faults from the APIC
     """
 
-    def __init__(self, check, api, instance, namespace, send_log):  # JMW is this the proper way to get access to send_log here?
+    def __init__(self, check, api, instance, namespace):
         self.check = check
         self.api = api
         self.instance = instance
         self.check_tags = check.check_tags
         self.namespace = namespace
-        self.send_log = send_log  # JMW is this the proper way to do this?
+        self.send_log = check.send_log
 
         # JMWCONFIG add send_faults
         # Config for submitting device/interface metadata to NDM

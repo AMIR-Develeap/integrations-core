@@ -101,7 +101,6 @@ class CiscoACICheck(AgentCheck):
 
         self.tagger.api = api
 
-        # JMW tenant.collect()
         try:
             tenant = Tenant(self, api, self.instance, instance_hash)
             tenant.collect()
@@ -116,7 +115,6 @@ class CiscoACICheck(AgentCheck):
             api.close()
             raise
 
-        # JMW fabric.collect()
         try:
             fabric = Fabric(self, api, self.instance, self.instance.get('namespace', 'default'))
             fabric.collect()
@@ -131,7 +129,6 @@ class CiscoACICheck(AgentCheck):
             api.close()
             raise
 
-        # JMW capacity.collect()
         try:
             capacity = Capacity(api, self.instance, check_tags=self.check_tags, gauge=self.gauge, log=self.log)
             capacity.collect()
@@ -146,9 +143,8 @@ class CiscoACICheck(AgentCheck):
             api.close()
             raise
 
-        # JMW new faults.collect()?
         try:
-            faults = Faults(self, api, self.instance, self.instance.get('namespace', 'default'), self.send_log)  # JMWSENDLOG
+            faults = Faults(self, api, self.instance, self.instance.get('namespace', 'default'))
             faults.collect()
         except Exception as e:
             self.log.error('faults collection failed: %s', e)
