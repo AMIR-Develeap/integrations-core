@@ -91,6 +91,7 @@ class InstanceConfig(BaseModel):
     read_timeout: Optional[float] = None
     request_size: Optional[float] = None
     send_ndm_metadata: Optional[bool] = None
+    send_faults: Optional[bool] = None
     service: Optional[str] = None
     skip_proxy: Optional[bool] = None
     tags: Optional[tuple[str, ...]] = None

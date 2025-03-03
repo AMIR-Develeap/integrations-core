@@ -33,6 +33,7 @@ CONFIG_WITH_TAGS = {
     'tenant': ['DataDog'],
     "tags": ["project:cisco_aci"],
     "send_ndm_metadata": True,
+    # JMWTEST send_faults - add test
 }
 
 # list of fixture names

@@ -76,6 +76,10 @@ def instance_send_ndm_metadata():
     return False
 
 
+def instance_send_faults():
+    return False
+
+
 def instance_skip_proxy():
     return False
 

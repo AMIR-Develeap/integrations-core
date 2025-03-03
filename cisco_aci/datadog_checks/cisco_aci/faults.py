@@ -30,9 +30,8 @@ class Faults:
         self.namespace = namespace
         self.send_log = check.send_log
 
-        # JMWCONFIG add send_faults
-        # Config for submitting device/interface metadata to NDM
-        self.send_ndm_metadata = self.instance.get('send_ndm_metadata', False)
+        # Config for submitting faults as log
+        self.send_faults = self.instance.get('send_faults', False)
 
         # grab some functions from the check
         self.gauge = check.gauge
@@ -43,14 +42,13 @@ class Faults:
         self.external_host_tags = self.check.external_host_tags
         self.event_platform_event = check.event_platform_event
 
-    # JMWDUP
-    def ndm_enabled(self):
-        return self.send_ndm_metadata
+    def faults_enabled(self):
+        return self.send_faults
 
     def collect(self):
         self.log.info("JMWfaults.collect()")
         # JMW use this flag for faults too?
-        if self.ndm_enabled():  # JMW change
+        if self.faults_enabled():  # JMW test with both true and false
             faults = self.api.get_faults()
             # JMW? collect_timestamp = int(time.time())
             self.submit_faults(faults)
